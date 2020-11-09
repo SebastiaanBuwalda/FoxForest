@@ -9,6 +9,8 @@ public class DialogueManager : MonoBehaviour
     public Text nameText;
     public Text dialogueText;
 
+    private float textSpeed;
+
     public Queue<string> sentences;
     // Start is called before the first frame update
     void Start()
@@ -21,6 +23,7 @@ public class DialogueManager : MonoBehaviour
         GlobalVariables.ISINDIALOGUE = true;
         textBox.SetActive(true);
         nameText.text = dialogue.name;
+        textSpeed = dialogue.dialogueSpeed;
         sentences.Clear();
 
         foreach (string sentence in dialogue.sentences)
@@ -61,7 +64,7 @@ public class DialogueManager : MonoBehaviour
         foreach(char letter in sentence.ToCharArray())
         {
             dialogueText.text += letter;
-            yield return null;
+            yield return new WaitForSeconds(textSpeed);
         }
     }
 
