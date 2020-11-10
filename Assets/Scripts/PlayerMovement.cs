@@ -13,21 +13,40 @@ public class PlayerMovement : MonoBehaviour
     private float walkSpeed = 5;
     [SerializeField]
     private float sprintSpeed = 7;
+    [SerializeField]
+    private float sprintLoss = 0.8F;
 
+    [SerializeField]
+    private float staminaRegain = 0.5F;
+    [SerializeField]
+    private float staminaDelay = 1F;
     [SerializeField]
     private float interpolation = 0.8F;
 
     [SerializeField]
     private Rigidbody2D playerRigibody;
 
+    private bool regainStamina = false;
+
+    private bool isRunning = false;
+
     void FixedUpdate()
     {
+        print(regainStamina);
         if (!GlobalVariables.ISINDIALOGUE)
         {
-            if (Input.GetKey(KeyCode.LeftShift))
+            if (Input.GetKey(KeyCode.LeftShift)&&GlobalVariables.STAMINA>0 )
             {
+                regainStamina = false;
                 playerRigibody.velocity = new Vector2(Mathf.Lerp(0, Input.GetAxisRaw("Horizontal") * sprintSpeed, interpolation),
                                                      Mathf.Lerp(0, Input.GetAxisRaw("Vertical") * sprintSpeed, interpolation));
+                StopCoroutine(RestoreStamina());
+                GlobalVariables.STAMINA-=sprintLoss;
+                if(GlobalVariables.STAMINA<0)
+                {
+                    GlobalVariables.STAMINA = 0;
+                }
+                
             }
             else
             {
@@ -47,6 +66,29 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             playerRigibody.velocity = Vector2.zero;
+            StopCoroutine(RestoreStamina());
         }
+
+        if(GlobalVariables.STAMINA!=100 & regainStamina == false)
+        {
+            StartCoroutine(RestoreStamina());
+
+        }
+        else if(GlobalVariables.STAMINA>=100)
+        {
+            regainStamina = false;
+            GlobalVariables.STAMINA = 100;
+        }
+        else if (regainStamina)
+        {
+            GlobalVariables.STAMINA += staminaRegain;
+        }
+    }
+
+    IEnumerator RestoreStamina()
+    {
+        yield return new WaitForSeconds(staminaDelay);
+        regainStamina = true;
+
     }
 }
