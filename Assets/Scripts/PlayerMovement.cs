@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -28,23 +29,29 @@ public class PlayerMovement : MonoBehaviour
 
     private bool regainStamina = false;
 
-    private bool isRunning = false;
+    private bool canRun = true;
+
+    [SerializeField]
+    private Text staminaText;
 
     void FixedUpdate()
     {
-        print(regainStamina);
         if (!GlobalVariables.ISINDIALOGUE)
         {
-            if (Input.GetKey(KeyCode.LeftShift)&&GlobalVariables.STAMINA>0 )
+            if (Input.GetKey(KeyCode.LeftShift)&&GlobalVariables.STAMINA>0&&canRun)
             {
                 regainStamina = false;
                 playerRigibody.velocity = new Vector2(Mathf.Lerp(0, Input.GetAxisRaw("Horizontal") * sprintSpeed, interpolation),
                                                      Mathf.Lerp(0, Input.GetAxisRaw("Vertical") * sprintSpeed, interpolation));
                 StopCoroutine(RestoreStamina());
                 GlobalVariables.STAMINA-=sprintLoss;
+                UpdateStaminaText();
                 if(GlobalVariables.STAMINA<0)
                 {
                     GlobalVariables.STAMINA = 0;
+                    canRun = false;
+
+                    UpdateStaminaText();
                 }
                 
             }
@@ -76,12 +83,17 @@ public class PlayerMovement : MonoBehaviour
         }
         else if(GlobalVariables.STAMINA>=100)
         {
+            canRun = true;
             regainStamina = false;
             GlobalVariables.STAMINA = 100;
+            UpdateStaminaText();
+
         }
         else if (regainStamina)
         {
             GlobalVariables.STAMINA += staminaRegain;
+            UpdateStaminaText();
+
         }
     }
 
@@ -90,5 +102,18 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(staminaDelay);
         regainStamina = true;
 
+    }
+
+    void UpdateStaminaText()
+    {
+        staminaText.text = Mathf.Round(GlobalVariables.STAMINA).ToString();
+        if(canRun)
+        {
+            staminaText.color = Color.black;
+        }
+        else
+        {
+            staminaText.color = Color.red;
+        }
     }
 }
