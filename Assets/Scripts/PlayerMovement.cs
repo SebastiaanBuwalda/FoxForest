@@ -15,7 +15,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private float sprintSpeed = 7;
     [SerializeField]
-    private float sprintLoss = 0.8F;
+    private float sprintLoss = 0.4F;
+
+    [SerializeField]
+    private float sniffLoss = 0.2F;
 
     [SerializeField]
     private float staminaRegain = 0.5F;
@@ -29,7 +32,9 @@ public class PlayerMovement : MonoBehaviour
 
     private bool regainStamina = false;
 
-    private bool canRun = true;
+    private bool isNotRecoveringStamina = true;
+
+
 
     [SerializeField]
     private Text staminaText;
@@ -38,7 +43,28 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!GlobalVariables.ISINDIALOGUE)
         {
-            if (Input.GetKey(KeyCode.LeftShift)&&GlobalVariables.STAMINA>0&&canRun)
+            if(Input.GetKey(KeyCode.Q) && GlobalVariables.STAMINA > 0 && isNotRecoveringStamina)
+            {
+                regainStamina = false;
+                StopCoroutine(RestoreStamina());
+
+                GlobalVariables.ISINSNIFFMODE = true;
+                GlobalVariables.STAMINA -= sniffLoss;
+                UpdateStaminaText();
+                if (GlobalVariables.STAMINA < 0)
+                {
+                    GlobalVariables.STAMINA = 0;
+                    isNotRecoveringStamina = false;
+                    GlobalVariables.ISINSNIFFMODE = false;
+
+                    UpdateStaminaText();
+                }
+            }
+            else if (Input.GetKeyUp(KeyCode.Q))
+            {
+                GlobalVariables.ISINSNIFFMODE = false;
+            }
+            if (Input.GetKey(KeyCode.LeftShift)&&GlobalVariables.STAMINA>0&&isNotRecoveringStamina&&(Input.GetAxisRaw("Horizontal")!=0||Input.GetAxisRaw("Vertical") != 0))
             {
                 regainStamina = false;
                 playerRigibody.velocity = new Vector2(Mathf.Lerp(0, Input.GetAxisRaw("Horizontal") * sprintSpeed, interpolation),
@@ -49,7 +75,8 @@ public class PlayerMovement : MonoBehaviour
                 if(GlobalVariables.STAMINA<0)
                 {
                     GlobalVariables.STAMINA = 0;
-                    canRun = false;
+                    isNotRecoveringStamina = false;
+                    GlobalVariables.ISINSNIFFMODE = false;
 
                     UpdateStaminaText();
                 }
@@ -74,16 +101,17 @@ public class PlayerMovement : MonoBehaviour
         {
             playerRigibody.velocity = Vector2.zero;
             StopCoroutine(RestoreStamina());
+            GlobalVariables.ISINSNIFFMODE = false;
         }
 
-        if(GlobalVariables.STAMINA!=100 & regainStamina == false)
+        if(GlobalVariables.STAMINA!=100 & regainStamina == false & GlobalVariables.ISINDIALOGUE == false)
         {
             StartCoroutine(RestoreStamina());
 
         }
         else if(GlobalVariables.STAMINA>=100)
         {
-            canRun = true;
+            isNotRecoveringStamina = true;
             regainStamina = false;
             GlobalVariables.STAMINA = 100;
             UpdateStaminaText();
@@ -106,8 +134,8 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateStaminaText()
     {
-        staminaText.text = Mathf.Round(GlobalVariables.STAMINA).ToString();
-        if(canRun)
+        staminaText.text = Mathf.Round(GlobalVariables.STAMINA/10).ToString();
+        if(isNotRecoveringStamina)
         {
             staminaText.color = Color.black;
         }
